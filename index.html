@@ -1707,7 +1707,37 @@ async function submitSurvey() {
 }
 
 // ── INIT ──
-showScreen('s-intro');
+(async function init() {
+  const urlRef = new URLSearchParams(window.location.search).get('ref') || '';
+
+  if (urlRef) {
+    try {
+      const res = await fetch(SCRIPT_URL + '?action=check&ref=' + encodeURIComponent(urlRef));
+      const data = await res.json();
+      if (data.used) {
+        // Replace intro screen with an "already completed" message
+        const introCard = document.querySelector('#s-intro .intro-card');
+        if (introCard) {
+          introCard.innerHTML = `
+            <div class="intro-top">
+              <div class="intro-survey-tag">AI Innovation Survey 2026</div>
+              <div class="intro-title">Survey Already Completed</div>
+            </div>
+            <div class="intro-body">
+              <p class="intro-text">This survey link has already been used. Each link can only be completed once.</p>
+              <p class="intro-text">If you believe this is an error, please contact the research team.</p>
+            </div>`;
+        }
+        showScreen('s-intro');
+        return;
+      }
+    } catch (e) {
+      // If check fails, allow respondent through (fail open)
+    }
+  }
+
+  showScreen('s-intro');
+})();
 </script>
 </body>
 </html>
