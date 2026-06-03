@@ -1534,7 +1534,7 @@ if (q10aoe) q10aoe.addEventListener('input', () => {
 
 // ── APPS SCRIPT URL ──
 // Paste your deployed Web App URL here after deploying Code.gs
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2brzI2wZCmgfNOVdCxRHMAC5Kp1fWzate--dw4M2IZhnW7sVMMoLLQSkDQmAc9Qw/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyqicYeEEyze8GW2Ho0GjW6bcykRxUEwP_XPrbSLHKmka0INJs3toHRYAcUESa1xOYH/exec';
 
 // ── LABEL LOOKUP MAPS ──
 const LABELS = {
@@ -1680,49 +1680,27 @@ function collectPayload(ref) {
 }
 
 // ── SUBMIT SURVEY ──
-function submitSurvey() {
+async function submitSurvey() {
   const btn = document.getElementById('btn-submit');
   if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
 
   const urlRef = new URLSearchParams(window.location.search).get('ref') || '';
   const payload = collectPayload(urlRef);
 
-  // ── IFRAME FORM POST (bypasses Apps Script CORS restriction) ──
-  // Apps Script blocks fetch() from GitHub Pages. Posting via a hidden
-  // iframe+form avoids the CORS preflight entirely. We can't read the
-  // response, so we use a 4-second timeout then show the thank-you screen.
+  // ── NO-CORS FETCH ──
+  // mode:'no-cors' bypasses the CORS block. The POST reaches Apps Script
+  // successfully (confirmed via executions log). We can't read the response
+  // back, so we wait briefly then show the thank-you screen.
   try {
-    const iframeName = 'gs_submit_' + Date.now();
-    const iframe = document.createElement('iframe');
-    iframe.name = iframeName;
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = SCRIPT_URL;
-    form.target = iframeName;
-    form.style.display = 'none';
-
-    // Apps Script reads e.postData.contents as JSON string
-    // Wrap payload in a single hidden field named 'payload'
-    const hidden = document.createElement('input');
-    hidden.type = 'hidden';
-    hidden.name = 'payload';
-    hidden.value = JSON.stringify(payload);
-    form.appendChild(hidden);
-
-    document.body.appendChild(form);
-    form.submit();
-
-    // Wait 4s then advance — we trust the POST went through
-    setTimeout(function() {
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
-      history.push('s-complete');
-      showScreen('s-complete');
-    }, 4000);
-
+    await fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    // Fetch resolved — POST went through
+    history.push('s-complete');
+    showScreen('s-complete');
   } catch (err) {
     if (btn) { btn.disabled = false; btn.textContent = 'Submit Survey →'; }
     alert('Submission failed: ' + err.message);
