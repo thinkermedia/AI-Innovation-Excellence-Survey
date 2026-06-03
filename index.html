@@ -1534,7 +1534,7 @@ if (q10aoe) q10aoe.addEventListener('input', () => {
 
 // ── APPS SCRIPT URL ──
 // Paste your deployed Web App URL here after deploying Code.gs
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRmOcWs3cUXy6hEToFXIkDWfbIZ82dw0virWxprTCDGQmssWLwzVEbZhuSAPAF2bPv/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby2brzI2wZCmgfNOVdCxRHMAC5Kp1fWzate--dw4M2IZhnW7sVMMoLLQSkDQmAc9Qw/exec';
 
 // ── LABEL LOOKUP MAPS ──
 const LABELS = {
@@ -1680,30 +1680,52 @@ function collectPayload(ref) {
 }
 
 // ── SUBMIT SURVEY ──
-async function submitSurvey() {
+function submitSurvey() {
   const btn = document.getElementById('btn-submit');
   if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
 
-  // Capture ref from URL param
   const urlRef = new URLSearchParams(window.location.search).get('ref') || '';
   const payload = collectPayload(urlRef);
 
+  // ── IFRAME FORM POST (bypasses Apps Script CORS restriction) ──
+  // Apps Script blocks fetch() from GitHub Pages. Posting via a hidden
+  // iframe+form avoids the CORS preflight entirely. We can't read the
+  // response, so we use a 4-second timeout then show the thank-you screen.
   try {
-    const resp = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    const data = await resp.json();
-    if (data.status === 'success') {
+    const iframeName = 'gs_submit_' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SCRIPT_URL;
+    form.target = iframeName;
+    form.style.display = 'none';
+
+    // Apps Script reads e.postData.contents as JSON string
+    // Wrap payload in a single hidden field named 'payload'
+    const hidden = document.createElement('input');
+    hidden.type = 'hidden';
+    hidden.name = 'payload';
+    hidden.value = JSON.stringify(payload);
+    form.appendChild(hidden);
+
+    document.body.appendChild(form);
+    form.submit();
+
+    // Wait 4s then advance — we trust the POST went through
+    setTimeout(function() {
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
       history.push('s-complete');
       showScreen('s-complete');
-    } else {
-      throw new Error(data.message || 'Unknown error');
-    }
+    }, 4000);
+
   } catch (err) {
     if (btn) { btn.disabled = false; btn.textContent = 'Submit Survey →'; }
-    alert('Submission failed. Please check your connection and try again.\n\nError: ' + err.message);
+    alert('Submission failed: ' + err.message);
   }
 }
 
