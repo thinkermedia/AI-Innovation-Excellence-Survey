@@ -1523,7 +1523,7 @@ if (q10aoe) q10aoe.addEventListener('input', () => {
 });
 
 // ── APPS SCRIPT URL ──
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw6U5KbnFJfyNBUfL3TWoxWvkef7G5N8OsufYy6nBEJBHkW0MMwOlfHdHp1kHcfRNDz/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwVLsSkezh4AxFWus6BcZi-C_RdYfs-ewFPiTVKAd_-bicVtPvgpLk3PBtLrTLXiQsX/exec';
 // ── LABEL LOOKUP MAPS — synced exactly to HTML option text ──
 const LABELS = {
   q1:  {
@@ -1545,7 +1545,7 @@ const LABELS = {
   },
   q4:  {
     '01':'Less than $50 million','02':'$50 million to $500 million',
-    '03':'$501 million to $999.9 million','04':'$1 billion to $5 billion',
+    '03':'$501 million to $1 billion','04':'$1 billion to $5 billion',
     '05':'$5 billion to $10 billion','06':'$10 billion or more'
   },
   q5:  {
@@ -1669,8 +1669,8 @@ const LABELS = {
     '05':'Very Poor - Little understanding and no alignment','99':'Not sure'
   },
   q20: {
-    '1':'Significantly ahead','2':'Somewhat ahead','3':'About the same',
-    '4':'Somewhat behind','5':'Significantly behind'
+    '1':'Fully agree','2':'Mostly agree','3':'Neutral',
+    '4':'Mostly disagree','5':'Do not agree at all'
   },
   q21: {
     '01':'Multiple AI systems in production that are mission-critical and used broadly',
@@ -1730,7 +1730,7 @@ function collectPayload(ref) {
     return { code: el.value, label: (map && map[el.value]) ? map[el.value] : el.value };
   }
 
-  const matScale = {'1':'Significantly ahead','2':'Somewhat ahead','3':'About the same','4':'Somewhat behind','5':'Significantly behind'};
+  const matScale = {'1':'Fully agree','2':'Mostly agree','3':'Neutral','4':'Mostly disagree','5':'Do not agree at all'};
 
   const q1  = singleOE('q1','q1-oe');
   const q2  = singleOE('q2','q2-oe');
